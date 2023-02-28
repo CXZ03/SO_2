@@ -1,3 +1,6 @@
+/* Includes */
+#include "fcntl.h"
+#include "unistd.h"
 /* Constantes */
 #define BLOCKSIZE 1024;
 
@@ -18,4 +21,12 @@ int bumount(){
     return close(descriptor);
 }
 
-int bwrite()
+int bwrite(unsigned int nbloque, const void *buf){
+    int desp = nbloque*BLOCKSIZE;
+    Iseek(descriptor,desp,SEEK_SET);
+    if (write(descriptor,&buf,BLOCKSIZE)>=0){
+        return -1;
+    }
+    return BLOCKSIZE;
+
+}
