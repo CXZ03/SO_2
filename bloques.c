@@ -1,16 +1,25 @@
-/* Includes */
-#include "fcntl.h"
-#include "unistd.h"
-/* Constantes */
-#define BLOCKSIZE 1024;
+#include <stdio.h>  //printf(), fprintf(), stderr, stdout, stdin
+#include <fcntl.h> //O_WRONLY, O_CREAT, O_TRUNC
+#include <sys/stat.h> //S_IRUSR, S_IWUSR
+#include <stdlib.h>  //exit(), EXIT_SUCCESS, EXIT_FAILURE, atoi()
+#include <unistd.h> // SEEK_SET, read(), write(), open(), close(), lseek()
+#include <errno.h>  //errno
+#include <string.h> // strerror()
+#include "bloques.h"
 
-/* Variables */
-int descriptor;
+#define BLOCKSIZE 1024 // bytes
+
+
+#define EXITO 0 //gestión errores
+#define FALLO -1 //gestión errores
+
+static int descriptor;
+
 
 int bmount(const char *camino){
     descriptor = open(camino, O_RDWR|O_CREAT, 0666);
     if (descriptor == -1){
-        return descriptor;  // Error
+        return FALLO;  // Error
     }else{
         return descriptor;    
     }
@@ -21,12 +30,25 @@ int bumount(){
     return close(descriptor);
 }
 
+/* función para escribir un bloque*/
 int bwrite(unsigned int nbloque, const void *buf){
-    int desp = nbloque*BLOCKSIZE;
-    Iseek(descriptor,desp,SEEK_SET);
-    if (write(descriptor,&buf,BLOCKSIZE)>=0){
-        return -1;
+    //Posicionar el puntero en el offset
+    Iseek(descriptor,nbloque*BLOCKSIZE,SEEK_SET);
+    //Escritura
+    if (write(descriptor,&buf,BLOCKSIZE)<0){
+        return FALLO;
     }
     return BLOCKSIZE;
 
+}
+
+/* función para leer un bloque*/
+int bread(unsigned int nbloque, void *buf){
+    //Posicionar el puntero en el offset
+    Iseek(descriptor,nbloque*BLOCKSIZE,SEEK_SET);
+    //Lectura
+    if(read(descriptor, &buf,BLOCKSIZE)<0){
+        FALLO;
+    }
+    return BLOCKSIZE;
 }
