@@ -31,7 +31,7 @@ int bmount(const char *camino)
     }
 }
 
-/* función para desmontar el dispositivo virtual*/
+/* función para desmontar el dispositivo virt   ual*/
 int bumount(){
     if (descriptor == -1)
     {
