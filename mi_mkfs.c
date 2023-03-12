@@ -1,5 +1,5 @@
 
-#include "bloques.h"
+#include "ficheros_basico.h"
 
 unsigned char buffer_memoria[BLOCKSIZE];
 
@@ -10,18 +10,62 @@ int main(int argc,char **argv){
         fprintf(stderr, "Error de sintaxis. Sintaxis correcta: ./mi_mkfs <nombre del fichero> <numero de bloques>\n");
         return FALLO;
     }
-    bmount(argv[1]);
 
-    //Iniciar a 0 el buffer de memoria
-    memset(buffer_memoria,0,BLOCKSIZE);
+    //Parametros de argv
+    char *path = argv[1];
+    int nbloques = atoi(argv[2]);
+    int ninodos = nbloques/4;
 
-    //Bucle para inicializar a 0s el fichero
-    for (size_t i = 0; i < atoi(argv[2]); i++)
+    //Init buff
+    unsigned char buf[BLOCKSIZE];
+    if (!memset(buf, 0, BLOCKSIZE))
     {
-        bwrite(i,buffer_memoria); //No se que pasarle por parámetro
+        return FALLO;
     }
 
+    //Montaje
+    if (bmount(path) == FALLO)
+    {
+        fprintf(stderr, "Error al montar el dispositivo \n");
+        return FALLO;
+    }
+    
+    //Escritura
+    for (int i = 0; i < nbloques; i++)
+    {
+        if (bwrite(i, buf) == FALLO)
+        {
+            fprintf(stderr, "ERror al escribir en el dispositivo en la posicion %i\n", i);
+            return FALLO;
+        }
+        
+    }
+    
+    //Init metadatos
+    if (initSB(nbloques, ninodos) == FALLO)
+    {
+        fprintf(stderr, "Error inicializando el superbloque");
+        return FALLO;
+    }
+    
+    if (initMB() == FALLO)
+    {
+        fprintf(stderr, "Error inicializando el mapa de bits");
+        return FALLO;
+    }
+
+    if(initAI() == FALLO)
+    {
+        fprintf(stderr, "Error inicializando la array de inodos");
+        return FALLO;
+    }
+    
     //Cerramos el fichero
-    bumount();
+    if (bumount() == FALLO)
+    {
+        fprintf(stderr, "Error al desmontar el dispositivo \n");
+        return FALLO;
+    }
+    return EXITO;
     
 }
