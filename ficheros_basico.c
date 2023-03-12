@@ -2,6 +2,7 @@
 
 #define DEBUG3 1
 
+int bw = 0;
 
 /*
 *   Funcion tamMB()
@@ -63,13 +64,79 @@ int initSB(unsigned int nbloques, unsigned int ninodos){
 
 
 int initMB(){
-    int MDsize=tamSB+tamMB()+tamAI();
-    char bufferMD[MDsize/8];
+    
+    unsigned char buffer[BLOCKSIZE];
+
+    if (memset(buffer, 0, BLOCKSIZE) == NULL)
+    {
+        return FALLO;
+    }
+    
+    struct superbloque SB;
+    if (bread(posSB, &SB) == FALLO)
+    {
+        return FALLO;
+    }
+
+    for(int i = 0; i <= SB.posUltimoBloqueAI; i++)
+    {
+        if (escribir_bit(i, 1) == FALLO)
+        {
+            return FALLO;
+        }
+    }
+    SB.cantBloquesLibres = SB.cantBloquesLibres - (SB.posUltimoBloqueAI + 1);
+    bw = bwrite(posSB, &SB);
+    if (bw < 0)
+    {
+        return FALLO;
+    }
+    return EXITO;
+}
+
+int initAI()
+{
 
 }
 
 
-int initAI()
+
+
+int escribir_bit(unsigned int nbloque, unsigned int bit)
 {
-    
+    int posbyte, posbit, nbloqueMB, nbloqueabs;
+    unsigned char *bufferMB = malloc(BLOCKSIZE);
+    unsigned char mascara = 128;
+
+    struct superbloque SB;
+    bread(posSB, &SB);
+
+    posbyte = nbloque / 8;
+    posbit = nbloque % 8;
+    nbloqueMB = posbyte / BLOCKSIZE;
+    nbloqueabs = SB.posPrimerBloqueMB + nbloqueMB;
+
+    if (bread(nbloqueabs, bufferMB) < 0)
+    {
+        return FALLO;
+    }
+
+    posbyte = posbyte % BLOCKSIZE;
+
+    mascara >>= posbit;
+
+    if (bit == 1)
+    {
+        bufferMB[posbyte] |= mascara;
+    }
+    else
+    {
+        bufferMB[posbyte] &= ~mascara;
+    }
+
+    if (bwrite(nbloqueabs, bufferMB) < 0)
+    {
+        return FALLO;
+    }
+    return EXITO;
 }
