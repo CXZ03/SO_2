@@ -62,7 +62,13 @@ int initSB(unsigned int nbloques, unsigned int ninodos){
     return EXITO;
 }
 
-
+/*
+*   Funcion: initMB()
+*   Inicializa el mapa de bits
+*   Input:  None
+*   Output: EXITO = 0: sin errores
+*           FALLO = -1: error en la ejecucion
+*/
 int initMB(){
     
     unsigned char buffer[BLOCKSIZE];
@@ -97,6 +103,47 @@ int initMB(){
 int initAI()
 {
 
+unsigned char buffer[BLOCKSIZE];
+
+if (memset(buffer, 0, BLOCKSIZE) == NULL)
+{
+    return FALLO;
+}
+
+struct inodo inodos[BLOCKSIZE/INODOSIZE];
+struct superbloque SB;
+
+if (bread(posSB, &SB) == FALLO)
+{
+    return FALLO;
+}
+
+
+int contInodos = SB.posPrimerInodoLibre + 1;
+
+for (int i = SB.posPrimerBloqueAI; i <= SB.posUltimoBloqueAI; i++)
+{
+    for (int j = 0; i < (BLOCKSIZE / INODOSIZE); j++)
+    {
+        inodos[j].tipo = 'l';
+        if (contInodos < SB.totInodos)
+        {
+            inodos[j].punterosDirectos[0] = contInodos;
+            contInodos++;
+        }
+        else
+        {
+            inodos[j].punterosDirectos[0] = UINT_MAX;
+            break;
+        }
+    }
+    if (bwrite(i, inodos) < 0)
+    {
+        fprintf(stderr, "Error al inicializar AI\n");
+        return FALLO;
+    }
+}
+return EXITO;
 }
 
 

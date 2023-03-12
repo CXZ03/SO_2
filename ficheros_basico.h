@@ -1,6 +1,7 @@
 
 //Includes
 #include "bloques.h"
+#include "limits.h"
 
 //Define
 #define posSB 0 // el superbloque se escribe en el primer bloque de nuestro FS
