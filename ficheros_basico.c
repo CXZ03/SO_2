@@ -187,3 +187,80 @@ int escribir_bit(unsigned int nbloque, unsigned int bit)
     }
     return EXITO;
 }
+
+char leer_bit(unsigned int nbloque)
+{
+    int posbyte, posbit, nbloqueMB, nbloqueabs;
+    unsigned char *bufferMB = malloc(BLOCKSIZE);
+    unsigned char mascara = 128;
+
+    struct superbloque SB;
+    bread(posSB, &SB);
+
+    posbyte = nbloque / 8;
+    posbit = nbloque % 8;
+    nbloqueMB = posbyte / BLOCKSIZE;
+    nbloqueabs = SB.posPrimerBloqueMB + nbloqueMB;
+
+    unsigned char mascara = 128; 
+    mascara >>= posbit;          
+    mascara &= bufferMB[posbyte]; 
+    mascara >>= (7 - posbit);     
+
+    return mascara;
+}
+
+int reservar_bloque()
+{
+    struct superbloque SB;
+    bread(posSB, &SB);
+
+    if(SB.cantBloquesLibres==0){
+        return FALLO;
+    }
+    else
+    {
+        int nbloqueabs = SB.posPrimerBloqueMB;
+        int posByte, nbloque;
+        unsigned char *bufferMB = malloc(BLOCKSIZE);
+        unsigned char *bufferAux = malloc(BLOCKSIZE);
+
+        memset(bufferAux, 255, BLOCKSIZE); //Llenamos de 1s
+
+        //Buscamos el primer bloque con algún bit libre
+        while (memcmp(bufferMB,bufferAux,BLOCKSIZE)==0 && nbloqueabs<=SB.posUltimobloqueMB)
+        {
+            bread(nbloqueabs, bufferMB);
+            nbloqueabs++;
+        }
+        //Buscamos en que byte se encuentra el bit libre
+        for (int i = 0; i < BLOCKSIZE; i++)
+        {
+            if (bufferMB[i]!=255)
+            {
+                posByte=i;
+            }
+            
+        }
+        //Buscamos en que bit en concreto se encuentra el 0
+        unsigned char mascara = 128; // 10000000
+        posbit = 0;
+
+        while (bufferMB[posbyte] & mascara) // operador AND para bits
+        {
+            bufferMB[posbyte] <<= 1;// desplazamiento de bits a la izquierda
+            posbit++;
+        }
+        //determinamos el nº de bloque físico
+        nbloque = ((nbloqueabs - SB.posPrimerBloqueMB) * BLOCKSIZE + posbyte) * 8 + posbit;
+
+        escribir_bit(nbloque,1);
+        SB.cantBloquesLibres--;
+
+        //llenamos el bufferAux de 0s
+        memset(bufferAux, 0, BLOCKSIZE)
+        //Limpiamos
+        bwrite(nbloque,bufferAux);
+        return nbloque;
+    }
+}
