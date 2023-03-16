@@ -11,7 +11,7 @@
 
 
 #define EXITO 0 //gestión errores
-#define FALLO -1 //gestión erroresss
+#define FALLO -1 //gestión errores
 
 static int descriptor = 0;
 
