@@ -337,3 +337,54 @@ int leer_inodo(unsigned int ninodo, struct inodo *inodo)
     
     return EXITO;
 }
+
+int reservar_inodo(unsigned char tipo, unsigned char permisos)
+{
+    struct superbloque SB;
+    if (bread(posSB, &SB) == FALLO)
+    {
+        return FALLO;
+    }
+
+    //Comprobar que hay bloques libres
+    if (SB.cantBloquesLibres == 0)
+    {
+        return FALLO;
+    }
+    
+    unsigned int posInodoReservado = SB.posPrimerInodoLibre;
+    SB.posPrimerInodoLibre++;
+    SB.cantInodosLibres--;
+
+    struct inodo inodo;
+
+    inodo.tipo = tipo;
+    inodo.permisos = permisos;
+    inodo.nlinks = 1;
+    inodo.tamEnBytesLog = 0;
+    inodo.atime = time(NULL);
+    inodo.mtime = time(NULL);
+    inodo.ctime = time(NULL);
+    inodo.numBloquesOcupados = 0;
+    for (int i = 0; i < 12; i++)
+    {
+        for (int j = 0; j < 12; j++)
+        {
+            inodo.punterosDirectos[j] = 0;
+        }
+        inodo.punterosIndirectos[i] = 0;
+    }
+
+    if (escribir_inodo(posInodoReservado, &inodo) == FALLO)
+    {
+        return FALLO;
+    }
+
+    if (bwrite(posSB, &SB) == FALLO)
+    {
+        return FALLO;
+    }
+    
+        
+    return posInodoReservado;    
+}
